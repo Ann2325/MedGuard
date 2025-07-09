@@ -1,1 +1,1 @@
-# MedGuard
+MedGuard: AI-Powered Drug Interaction Checker is an intelligent web-based application designed to help patients and healthcare professionals safely manage medications. The system allows users to quickly check for potential drug interactions, view detailed information about each medication, and receive personalized recommendations based on age, medical conditions, and current treatments. 
