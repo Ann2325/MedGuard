@@ -1,0 +1,156 @@
+#code that run#
+
+*app.py*
+
+
+from flask import Flask, render_template, request
+import pandas as pd
+
+app = Flask(__name__)
+
+# Load the interaction dataset
+try:
+    interaction_df = pd.read_csv('C:/Users/shalom.mscai2325/Desktop/MAIN PROJECT/db_drug_interactions.csv')    
+    interaction_df['Drug 1'] = interaction_df['Drug 1'].str.lower()
+    interaction_df['Drug 2'] = interaction_df['Drug 2'].str.lower()
+except Exception as e:
+    print(f"Error loading interaction dataset: {e}")
+    interaction_df = None  # Prevent crashes if CSV loading fails
+
+# Load the drug details dataset
+try:
+    drug_details_df = pd.read_csv('C:/Users/shalom.mscai2325/Desktop/MAIN PROJECT/drugs.csv')
+    drug_details_df['drugName'] = drug_details_df['drugName'].str.lower()
+except Exception as e:
+    print(f"Error loading drug details dataset: {e}")
+    drug_details_df = None
+
+@app.route('/', methods=['GET', 'POST'])
+def index():
+    interaction_description = "No interaction found."
+    drug1_info = []
+    drug2_info = []
+    
+    if request.method == 'POST' and interaction_df is not None and drug_details_df is not None:
+        drug1 = request.form['drug1'].strip().lower()
+        drug2 = request.form['drug2'].strip().lower()
+        
+        # Search for interaction
+        interaction = interaction_df[((interaction_df['Drug 1'] == drug1) & (interaction_df['Drug 2'] == drug2)) | 
+                                     ((interaction_df['Drug 1'] == drug2) & (interaction_df['Drug 2'] == drug1))]
+        
+        if not interaction.empty:
+            interaction_description = interaction.iloc[0]['Interaction Description']
+        
+        # Get drug details
+        drug1_info = drug_details_df[drug_details_df['drugName'] == drug1].to_dict(orient='records')
+        drug2_info = drug_details_df[drug_details_df['drugName'] == drug2].to_dict(orient='records')
+    
+    return render_template('index.html', 
+                           interaction_description=interaction_description, 
+                           drug1_info=drug1_info, 
+                           drug2_info=drug2_info)
+
+if __name__ == '__main__':
+    app.run(debug=True)
+
+
+
+
+* index.html *
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drug Interaction Checker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            text-align: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            margin: auto;
+        }
+        h1 {
+            color: #333;
+        }
+        .input-group {
+            margin: 10px 0;
+        }
+        input {
+            padding: 8px;
+            width: 80%;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #28a745;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        .result-box {
+            background: #fff;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Drug Interaction Checker</h1>
+        <form method="POST">
+            <div class="input-group">
+                <label for="drug1">Drug 1:</label><br>
+                <input type="text" id="drug1" name="drug1" required>
+            </div>
+            <div class="input-group">
+                <label for="drug2">Drug 2:</label><br>
+                <input type="text" id="drug2" name="drug2" required>
+            </div>
+            <button type="submit">Check Interaction</button>
+        </form>
+
+        <div class="result-box">
+            <h2>Interaction Description:</h2>
+            <p>{{ interaction_description }}</p>
+        </div>
+
+        {% if drug1_info %}
+        <div class="result-box">
+            <h2>Drug 1 Details:</h2>
+            <p><strong>Name:</strong> {{ drug1_info[0]['drugName'] }}</p>
+            <p><strong>Description:</strong> {{ drug1_info[0]['description'] }}</p>
+            <p><a href="{{ drug1_info[0]['url'] }}" target="_blank">More Info</a></p>
+        </div>
+        {% endif %}
+
+        {% if drug2_info %}
+        <div class="result-box">
+            <h2>Drug 2 Details:</h2>
+            <p><strong>Name:</strong> {{ drug2_info[0]['drugName'] }}</p>
+            <p><strong>Description:</strong> {{ drug2_info[0]['description'] }}</p>
+            <p><a href="{{ drug2_info[0]['url'] }}" target="_blank">More Info</a></p>
+        </div>
+        {% endif %}
+    </div>
+
+</body>
+</html>

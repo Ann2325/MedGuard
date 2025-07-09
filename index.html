@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drug Interaction Checker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            text-align: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            margin: auto;
+        }
+        h1 {
+            color: #333;
+        }
+        .input-group {
+            margin: 10px 0;
+        }
+        input, textarea {
+            padding: 8px;
+            width: 80%;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #28a745;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        .result-box {
+            background: #fff;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
+        }
+        .error-box {
+            background: #fff;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Drug Interaction Checker</h1>
+        <form method="POST">
+            <div class="input-group">
+                <label for="drug1">Drug 1:</label><br>
+                <input type="text" id="drug1" name="drug1" required>
+            </div>
+            <div class="input-group">
+                <label for="drug2">Drug 2:</label><br>
+                <input type="text" id="drug2" name="drug2" required>
+            </div>
+            <button type="submit">Check Interaction</button>
+        </form>
+
+        {% if error_message %}
+        <div class="error-box">
+            <p style="color: red;">{{ error_message }}</p>
+        </div>
+        {% endif %}
+
+        <div class="result-box">
+            <h2>Interaction Description:</h2>
+            {% if interaction_description %}
+                <p>{{ interaction_description }}</p>
+            {% elif not error_message %}
+                <p>Enter two drugs to check their interaction.</p>
+            {% endif %}
+        </div>
+
+        {% if drug1_info %}
+        <div class="result-box">
+            <h2>Drug 1 Details:</h2>
+            <p><strong>Name:</strong> {{ drug1_info[0]['drugName'] }}</p>
+            <p><strong>Description:</strong> {{ drug1_info[0]['description'] }}</p>
+            <p><a href="{{ drug1_info[0]['url'] }}" target="_blank">More Info</a></p>
+        </div>
+        {% endif %}
+
+        {% if drug2_info %}
+        <div class="result-box">
+            <h2>Drug 2 Details:</h2>
+            <p><strong>Name:</strong> {{ drug2_info[0]['drugName'] }}</p>
+            <p><strong>Description:</strong> {{ drug2_info[0]['description'] }}</p>
+            <p><a href="{{ drug2_info[0]['url'] }}" target="_blank">More Info</a></p>
+        </div>
+        {% endif %}
+
+        <!-- AI Chat Section -->
+        <div class="result-box">
+            <h2>Ask AI:</h2>
+            <textarea id="ai-prompt" rows="3" placeholder="Ask anything about drugs..."></textarea><br>
+            <button onclick="askAI()">Ask AI</button>
+            <p id="ai-response"></p>
+        </div>
+
+    </div>
+
+    <script>
+        function askAI() {
+            let prompt = document.getElementById('ai-prompt').value;
+            document.getElementById('ai-response').innerHTML = "Processing...";
+
+            fetch('/process_prompt', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ prompt: prompt })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('ai-response').innerHTML = data.response;
+            })
+            .catch(error => {
+                document.getElementById('ai-response').innerHTML = "Error: " + error;
+            });
+        }
+    </script>
+
+</body>
+</html>

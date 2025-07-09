@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drug Interaction Checker</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+            margin-bottom: 20px;
+        }
+        .drug-info-card {
+            border-left: 4px solid #2575fc;
+        }
+        .interaction-card {
+            border-left: 4px solid #6a11cb;
+        }
+        .error-card {
+            border-left: 4px solid #dc3545;
+        }
+        .chat-container {
+            height: 500px;
+            overflow-y: auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            background: white;
+        }
+        .chat-message {
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            border-radius: 15px;
+            max-width: 85%;
+            word-wrap: break-word;
+        }
+        .user-message {
+            background: #007bff;
+            color: white;
+            margin-left: auto;
+        }
+        .bot-message {
+            background: #f0f2f5;
+            color: #1c1e21;
+            margin-right: auto;
+        }
+        .chat-input-container {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+        .nova-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 10px;
+            background: linear-gradient(45deg, #6a11cb, #2575fc);
+            border-radius: 15px;
+            color: white;
+        }
+        .nova-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+            border: 2px solid white;
+        }
+        .typing-indicator {
+            display: none;
+            color: #666;
+            font-style: italic;
+            margin-bottom: 10px;
+            padding: 5px 15px;
+        }
+        .send-button {
+            background: linear-gradient(45deg, #6a11cb, #2575fc);
+            border: none;
+            padding: 10px 20px;
+        }
+        .send-button:hover {
+            background: linear-gradient(45deg, #5a0fb6, #1e63d6);
+        }
+        .chat-input {
+            border-radius: 20px;
+            padding: 10px 20px;
+        }
+        .drug-description {
+            font-size: 0.95rem;
+            line-height: 1.5;
+            color: #2c3e50;
+        }
+        .drug-name {
+            color: #2575fc;
+            font-weight: 600;
+            text-transform: capitalize;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-10">
+                <nav class="mb-4">
+                    <a href="{{ url_for('home') }}" class="btn btn-secondary">← Back to Home</a>
+                </nav>
+
+                <div class="row">
+                    <!-- Left Column: Drug Interaction Form and Results -->
+                    <div class="col-md-5">
+                        <div class="card p-4">
+                            <h2 class="text-center mb-4">Drug Interaction Checker</h2>
+                            
+                            <!-- Patient Details Alert -->
+                            {% if patient_age or patient_conditions or patient_medications %}
+                            <div class="alert alert-info mb-4">
+                                <h5 class="alert-heading">Patient Profile</h5>
+                                {% if patient_age %}<p>Age: {{ patient_age }} years</p>{% endif %}
+                                {% if patient_conditions %}<p>Medical Conditions: {{ patient_conditions }}</p>{% endif %}
+                                {% if patient_medications %}
+                                <p>Current Medications: {{ patient_medications|join(', ') }}</p>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+
+                            <form id="interactionForm">
+                                <div class="mb-3">
+                                    <label for="drug1" class="form-label">First Drug</label>
+                                    <input type="text" class="form-control" id="drug1" name="drug1" required
+                                           value="{{ patient_medications[0] if patient_medications and patient_medications|length > 0 else '' }}">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="drug2" class="form-label">Second Drug</label>
+                                    <input type="text" class="form-control" id="drug2" name="drug2" required
+                                           value="{{ patient_medications[1] if patient_medications and patient_medications|length > 1 else '' }}">
+                                </div>
+                                <button type="submit" class="btn btn-primary">Check Interaction</button>
+                            </form>
+                        </div>
+
+                        <!-- Display interaction results if available -->
+                        {% if interaction_description or error_message %}
+                        <div class="card mt-4 p-4">
+                            <h4>Interaction Results</h4>
+                            {% if error_message %}
+                            <div class="alert alert-warning">{{ error_message }}</div>
+                            {% else %}
+                                {% if interaction_details %}
+                                <div class="interaction-details">
+                                    <div class="alert alert-info">
+                                        <h5>Interaction between {{ interaction_details.drug1|title }} and {{ interaction_details.drug2|title }}</h5>
+                                        <p class="mb-2"><strong>Description:</strong> {{ interaction_details.description }}</p>
+                                        <p class="mb-2"><strong>Severity:</strong> {{ interaction_details.severity }}</p>
+                                        <p class="mb-0"><strong>Recommendation:</strong> {{ interaction_details.recommendation }}</p>
+                                    </div>
+                                </div>
+                                {% else %}
+                                <div class="alert alert-info">{{ interaction_description }}</div>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                        {% endif %}
+
+                        {% if drug1_info %}
+                        <div class="card mt-4 p-4">
+                            <h4>{{ patient_medications[0] if patient_medications else drug1_info[0].drugName }} Information</h4>
+                            <p>{{ drug1_info[0].description }}</p>
+                        </div>
+                        {% endif %}
+
+                        {% if drug2_info %}
+                        <div class="card mt-4 p-4">
+                            <h4>{{ patient_medications[1] if patient_medications else drug2_info[0].drugName }} Information</h4>
+                            <p>{{ drug2_info[0].description }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Right Column: Nova AI Assistant -->
+                    <div class="col-md-7">
+                        <div class="card p-4">
+                            <div class="nova-header">
+                                <div class="nova-avatar">N</div>
+                                <div>
+                                    <h2 class="mb-0">Nova</h2>
+                                    <small>Chat Assistant</small>
+                                </div>
+                            </div>
+                            <div class="chat-container" id="chatContainer">
+                                <div class="chat-message bot-message">
+                                    Hello! I'm Nova. Please enter the drug names in the form on the left to check their interactions.
+                                </div>
+                            </div>
+                            <div id="typingIndicator" class="typing-indicator">
+                                Nova is thinking...
+                            </div>
+                            <div class="chat-input-container">
+                                <input type="text" class="form-control chat-input" id="chatInput" 
+                                       placeholder="Type your message here...">
+                                <button class="btn btn-primary send-button" onclick="sendMessage()">
+                                    Send
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const chatContainer = document.getElementById('chatContainer');
+        const chatInput = document.getElementById('chatInput');
+        const typingIndicator = document.getElementById('typingIndicator');
+        let currentDrug1 = '';
+        let currentDrug2 = '';
+        
+        // Initialize patient context with proper JSON parsing
+        const patientContext = {
+            age: {% if patient_age %}{{ patient_age|tojson|safe }}{% else %}null{% endif %},
+            conditions: {% if patient_conditions %}{{ patient_conditions|tojson|safe }}{% else %}null{% endif %},
+            medications: {% if patient_medications %}{{ patient_medications|tojson|safe }}{% else %}[]{% endif %}
+        };
+
+        function addMessage(message, isUser = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `chat-message ${isUser ? 'user-message' : 'bot-message'}`;
+            messageDiv.innerHTML = message;
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            typingIndicator.style.display = 'block';
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function hideTypingIndicator() {
+            typingIndicator.style.display = 'none';
+        }
+
+        function getPatientContextString() {
+            let context = [];
+            if (patientContext.age) {
+                context.push(`Patient age: ${patientContext.age} years`);
+            }
+            if (patientContext.conditions) {
+                context.push(`Medical conditions: ${patientContext.conditions}`);
+            }
+            if (patientContext.medications && patientContext.medications.length > 0) {
+                context.push(`Current medications: ${patientContext.medications.join(', ')}`);
+            }
+            return context.length > 0 ? `\nPatient Context: ${context.join('; ')}` : '';
+        }
+
+        function sendMessage() {
+            const message = chatInput.value.trim();
+            if (!message) return;
+
+            addMessage(message, true);
+            chatInput.value = '';
+            showTypingIndicator();
+
+            // Append both drug context and patient context to every message
+            let enhancedPrompt = message;
+            if (currentDrug1 && currentDrug2) {
+                enhancedPrompt += ` (In context of ${currentDrug1} and ${currentDrug2})`;
+            }
+            enhancedPrompt += getPatientContextString();
+
+            fetch('/process_prompt', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ prompt: enhancedPrompt })
+            })
+            .then(response => response.json())
+            .then(data => {
+                hideTypingIndicator();
+                addMessage(data.response, false);
+            })
+            .catch(error => {
+                hideTypingIndicator();
+                addMessage('I encountered an error. Please try again.', false);
+            });
+        }
+
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Handle form submission for drug interaction checker
+        document.getElementById('interactionForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            
+            // Update current drug names
+            currentDrug1 = formData.get('drug1');
+            currentDrug2 = formData.get('drug2');
+            
+            fetch('/check-interaction', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const newDoc = parser.parseFromString(html, 'text/html');
+                
+                const resultCards = newDoc.querySelectorAll('.card:not(:first-child)');
+                const currentResults = document.querySelectorAll('.card:not(:first-child)');
+                
+                currentResults.forEach(card => card.remove());
+                
+                const form = document.getElementById('interactionForm');
+                resultCards.forEach(card => {
+                    form.parentElement.insertAdjacentHTML('afterend', card.outerHTML);
+                });
+
+                // Clear previous chat messages
+                chatContainer.innerHTML = '';
+                
+                // Initial side effects prompt with drug names and patient context
+                const sideEffectsPrompt = `What are the key side effects and risks of taking ${currentDrug1} and ${currentDrug2} together, considering the following patient details:${getPatientContextString()}? Focus on the most relevant effects for this patient's specific conditions and medications.`;
+                
+                showTypingIndicator();
+                fetch('/process_prompt', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ prompt: sideEffectsPrompt })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    hideTypingIndicator();
+                    addMessage(data.response, false);
+                })
+                .catch(error => {
+                    hideTypingIndicator();
+                    addMessage('I encountered an error analyzing the medications.', false);
+                });
+            });
+        });
+
+        // Function to trigger initial Nova analysis
+        function triggerInitialAnalysis() {
+            if (currentDrug1 && currentDrug2) {
+                chatContainer.innerHTML = '';
+                const sideEffectsPrompt = `What are the key side effects and risks of taking ${currentDrug1} and ${currentDrug2} together, considering the following patient details:${getPatientContextString()}? Focus on the most relevant effects for this patient's specific conditions and medications.`;
+                
+                showTypingIndicator();
+                fetch('/process_prompt', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ prompt: sideEffectsPrompt })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    hideTypingIndicator();
+                    addMessage(data.response, false);
+                })
+                .catch(error => {
+                    hideTypingIndicator();
+                    addMessage('I encountered an error analyzing the medications.', false);
+                });
+            }
+        }
+
+        // Trigger initial analysis if medications are pre-filled
+        document.addEventListener('DOMContentLoaded', function() {
+            const drug1Input = document.getElementById('drug1');
+            const drug2Input = document.getElementById('drug2');
+            if (drug1Input && drug2Input && drug1Input.value && drug2Input.value) {
+                currentDrug1 = drug1Input.value;
+                currentDrug2 = drug2Input.value;
+                triggerInitialAnalysis();
+            }
+        });
+    </script>
+</body>
+</html> 

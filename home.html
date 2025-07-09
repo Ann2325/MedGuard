@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drug Interaction System - Home</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .hero-section {
+            min-height: 100vh;
+            padding: 4rem 0;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+            margin-bottom: 2rem;
+            transition: transform 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .feature-card {
+            text-align: center;
+            padding: 1.5rem;
+        }
+        .feature-icon {
+            font-size: 2.5rem;
+            color: #0d6efd;
+            margin-bottom: 1rem;
+        }
+        .btn-custom {
+            padding: 15px 30px;
+            margin: 10px;
+            font-size: 1.2rem;
+            transition: transform 0.2s;
+        }
+        .btn-custom:hover {
+            transform: translateY(-3px);
+        }
+        .recommendations-card {
+            display: none;
+            margin-top: 2rem;
+        }
+        .loading-spinner {
+            display: none;
+        }
+        #currentMedicationsList {
+            list-style: none;
+            padding: 0;
+        }
+        #currentMedicationsList li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem;
+            margin: 0.25rem 0;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+        .alert-warning {
+            background-color: #fff3cd;
+            border-color: #ffecb5;
+        }
+        .medical-disclaimer {
+            font-size: 0.9rem;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="hero-section">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <!-- Main Header Card -->
+                    <div class="card p-5 text-center">
+                        <h1 class="mb-4">Drug Interaction System</h1>
+                        <p class="lead">Your Comprehensive Tool for Medication Safety and Management</p>
+                        <div class="alert alert-warning mt-3">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Important Notice:</strong> This system is designed to assist healthcare decisions but should not replace professional medical advice.
+                        </div>
+                    </div>
+
+                    <!-- Features Section -->
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="card feature-card">
+                                <i class="fas fa-pills feature-icon"></i>
+                                <h3>Drug Interactions</h3>
+                                <p>Check potential interactions between multiple medications instantly.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card feature-card">
+                                <i class="fas fa-user-md feature-icon"></i>
+                                <h3>Personalized Care</h3>
+                                <p>Get recommendations based on your specific health profile.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card feature-card">
+                                <i class="fas fa-database feature-icon"></i>
+                                <h3>Extensive Database</h3>
+                                <p>Access comprehensive information about medications and their effects.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions Card -->
+                    <div class="card p-4 text-center">
+                        <h2 class="mb-4">Quick Actions</h2>
+                        <div class="d-grid gap-3">
+                            <a href="{{ url_for('interaction_checker') }}" class="btn btn-primary btn-custom">
+                                <i class="fas fa-search me-2"></i>Check Drug Interactions
+                            </a>
+                            <a href="{{ url_for('data_entry') }}" class="btn btn-success btn-custom">
+                                <i class="fas fa-plus-circle me-2"></i>Add New Drug Data
+                            </a>
+                            <button type="button" class="btn btn-info btn-custom" data-bs-toggle="modal" data-bs-target="#recommendationsModal">
+                                <i class="fas fa-clipboard-list me-2"></i>Get Patient-Specific Recommendations
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Additional Information Card -->
+                    <div class="card p-4 mt-4">
+                        <h2 class="mb-3">Important Information</h2>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h4><i class="fas fa-heart me-2"></i>For Your Safety</h4>
+                                <ul class="list-unstyled">
+                                    <li><i class="fas fa-check text-success me-2"></i>Always follow prescribed dosages</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Keep a current list of all medications</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Inform all healthcare providers about your medications</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h4><i class="fas fa-exclamation-circle me-2"></i>When to Seek Help</h4>
+                                <ul class="list-unstyled">
+                                    <li><i class="fas fa-exclamation text-danger me-2"></i>Unexpected side effects</li>
+                                    <li><i class="fas fa-exclamation text-danger me-2"></i>Allergic reactions</li>
+                                    <li><i class="fas fa-exclamation text-danger me-2"></i>Changes in health condition</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Patient Recommendations Modal -->
+    <div class="modal fade" id="recommendationsModal" tabindex="-1" aria-labelledby="recommendationsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title" id="recommendationsModalLabel">
+                        <i class="fas fa-clipboard-list me-2"></i>Patient-Specific Recommendations
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted mb-4">Get personalized recommendations based on your health profile, current medications, and medical conditions.</p>
+                    
+                    <form id="patientRecommendationForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="patientAge" class="form-label">
+                                    <i class="fas fa-user-clock me-2"></i>Age
+                                </label>
+                                <input type="number" class="form-control" id="patientAge" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-venus-mars me-2"></i>Gender
+                                </label>
+                                <select class="form-select" id="patientGender" required>
+                                    <option value="">Select Gender</option>
+                                    <option value="male">Male</option>
+                                    <option value="female">Female</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-notes-medical me-2"></i>Medical Conditions
+                            </label>
+                            <textarea class="form-control" id="medicalConditions" rows="2" 
+                                placeholder="Enter medical conditions separated by commas (e.g., diabetes, hypertension, heart disease)"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-pills me-2"></i>Current Medications
+                            </label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="medicationInput" 
+                                    placeholder="Enter medication name">
+                                <button type="button" class="btn btn-secondary" id="addMedication">
+                                    <i class="fas fa-plus"></i> Add
+                                </button>
+                            </div>
+                            <ul id="currentMedicationsList" class="mt-2"></ul>
+                        </div>
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-stethoscope me-2"></i>Get Recommendations
+                            </button>
+                        </div>
+                    </form>
+
+                    <div class="loading-spinner text-center mt-3">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+
+                    <div class="recommendations-card mt-4">
+                        <h3>Your Personalized Recommendations</h3>
+                        <div id="recommendationsContent" class="mt-3"></div>
+                        <div class="text-center mt-4">
+                            <button type="button" class="btn btn-primary btn-lg" id="proceedToInteractions" style="display: none;">
+                                <i class="fas fa-arrow-right me-2"></i>Proceed to Detailed Drug Interaction Check
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="medical-disclaimer mt-4 text-muted">
+                        <p><i class="fas fa-info-circle me-2"></i>Medical Disclaimer: The recommendations provided are based on general medical knowledge and the information you provide. Always consult with your healthcare provider before making any changes to your medication regimen.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const medicationInput = document.getElementById('medicationInput');
+            const addMedicationBtn = document.getElementById('addMedication');
+            const medicationsList = document.getElementById('currentMedicationsList');
+            const form = document.getElementById('patientRecommendationForm');
+            const loadingSpinner = document.querySelector('.loading-spinner');
+            const recommendationsCard = document.querySelector('.recommendations-card');
+            const recommendationsContent = document.getElementById('recommendationsContent');
+            const modal = document.getElementById('recommendationsModal');
+            const proceedToInteractionsBtn = document.getElementById('proceedToInteractions');
+
+            let currentMedications = [];
+            let interactionCheckerUrl = '';
+
+            // Reset form when modal is closed
+            modal.addEventListener('hidden.bs.modal', function () {
+                form.reset();
+                currentMedications = [];
+                updateMedicationsList();
+                recommendationsCard.style.display = 'none';
+                loadingSpinner.style.display = 'none';
+                proceedToInteractionsBtn.style.display = 'none';
+            });
+
+            // Handle proceed to interactions button click
+            proceedToInteractionsBtn.addEventListener('click', function() {
+                if (interactionCheckerUrl) {
+                    window.location.href = interactionCheckerUrl;
+                }
+            });
+
+            addMedicationBtn.addEventListener('click', function() {
+                const medication = medicationInput.value.trim();
+                if (medication) {
+                    currentMedications.push(medication);
+                    updateMedicationsList();
+                    medicationInput.value = '';
+                }
+            });
+
+            function updateMedicationsList() {
+                medicationsList.innerHTML = '';
+                currentMedications.forEach((med, index) => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        ${med}
+                        <button type="button" class="btn btn-sm btn-danger" onclick="removeMedication(${index})">
+                            <i class="fas fa-times"></i> Remove
+                        </button>
+                    `;
+                    medicationsList.appendChild(li);
+                });
+            }
+
+            window.removeMedication = function(index) {
+                currentMedications.splice(index, 1);
+                updateMedicationsList();
+            };
+
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                loadingSpinner.style.display = 'block';
+                recommendationsCard.style.display = 'none';
+                proceedToInteractionsBtn.style.display = 'none';
+
+                const patientData = {
+                    age: document.getElementById('patientAge').value,
+                    gender: document.getElementById('patientGender').value,
+                    medicalConditions: document.getElementById('medicalConditions').value.split(',').map(c => c.trim()),
+                    medications: currentMedications
+                };
+
+                try {
+                    const response = await fetch('/get-recommendations', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(patientData)
+                    });
+
+                    const data = await response.json();
+                    
+                    loadingSpinner.style.display = 'none';
+                    recommendationsCard.style.display = 'block';
+                    
+                    if (data.success) {
+                        recommendationsContent.innerHTML = `
+                            <div class="alert alert-info">
+                                <h4>Drug Interactions:</h4>
+                                <p>${data.interactions || 'No significant interactions found.'}</p>
+                                <h4>Recommendations:</h4>
+                                <ul>
+                                    ${data.recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                                </ul>
+                            </div>
+                        `;
+                        
+                        // Show the proceed button and store the URL
+                        if (data.interactionCheckerUrl) {
+                            interactionCheckerUrl = data.interactionCheckerUrl;
+                            proceedToInteractionsBtn.style.display = 'block';
+                        }
+                    } else {
+                        recommendationsContent.innerHTML = `
+                            <div class="alert alert-danger">
+                                ${data.message || 'An error occurred while generating recommendations.'}
+                            </div>
+                        `;
+                    }
+                } catch (error) {
+                    loadingSpinner.style.display = 'none';
+                    recommendationsContent.innerHTML = `
+                        <div class="alert alert-danger">
+                            An error occurred while processing your request. Please try again.
+                        </div>
+                    `;
+                    recommendationsCard.style.display = 'block';
+                }
+            });
+        });
+    </script>
+</body>
+</html> 
